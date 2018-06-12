@@ -24,6 +24,9 @@ SimParams.Upsampling = 4; % Upsampling factor
 SimParams.Ts = 1/SimParams.Fs; % Sample time
 SimParams.FrameSize = 100; % Number of modulated symbols per frame
 
+SimParams.Numtransmitantenna=2;
+SimParams.Numreceiveantenna=2;
+
 % Tx parameters
 SimParams.BarkerLength = 13; % Number of Barker code symbols
 SimParams.DataLength = (SimParams.FrameSize - SimParams.BarkerLength)*2; % Number of data payload bits per frame  !!!!!!

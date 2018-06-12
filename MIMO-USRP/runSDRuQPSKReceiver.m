@@ -67,10 +67,15 @@ if isempty(hRx)
 end
 
 % Initialize variables
+radio.ChannelMapping=[1 2];
+info(radio);
 currentTime = 0;
 len = uint32(0);
 BER = NaN;
-corruptSignal = complex(zeros(4000,1));
+corruptSignal = complex(zeros(4000,2));
+ pLen = 8;               % number of pilot symbols per frame
+ W = hadamard(pLen);
+ pilots = W(:, 1:prmQPSKReceiver.Numreceiveantenna);     % orthogonal set per transmit antenna
 
 while currentTime <  prmQPSKReceiver.StopTime
     % Keep accessing the SDRu System object output until it is valid
@@ -80,7 +85,15 @@ while currentTime <  prmQPSKReceiver.StopTime
     % When the SDRu System object output is valid, decode the received
     % message
     if len > 0
-        BER= step(hRx, corruptSignal);
+        % Channel Estimation
+        %   For each link => N*M estimates
+        HEst(1,:,:) = pilots(:,:).' * corruptSignal(1:pLen, :) / pLen;
+        %   assume held constant for the whole frame
+        HEst = HEst(ones(4000, 1), :, :);
+
+        % Combiner using estimated channel
+        decDataEst = ostbcComb(corruptSignal(pLen+1:end,:), HEst);
+        BER= step(hRx, decDataEst);
     end
     % Update simulation time
     currentTime = currentTime + prmQPSKReceiver.FrameTime;

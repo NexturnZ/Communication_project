@@ -1,4 +1,4 @@
-classdef QPSKBitsGenerator < matlab.System
+classdef FourQAMBitsGenerator < matlab.System
 %#codegen
 % Generates the bits for each frame
 
@@ -20,7 +20,7 @@ classdef QPSKBitsGenerator < matlab.System
     end
     
     methods
-        function obj = QPSKBitsGenerator(varargin)
+        function obj = FourQAMBitsGenerator(varargin)
             setProperties(obj,nargin,varargin{:});
         end
     end

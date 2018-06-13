@@ -1,4 +1,4 @@
-classdef QPSKTimingRecovery < matlab.System
+classdef FourQAMTimingRecovery < matlab.System
 %#codegen
 %    Refer figure 8.4.16, section 8.4.1 and figure 8.4.19 of "Digital 
 %    Communications - A Discrete-Time Approach" by Michael Rice for 
@@ -39,7 +39,7 @@ classdef QPSKTimingRecovery < matlab.System
     end
     
     methods
-        function obj = QPSKTimingRecovery(varargin)
+        function obj = FourQAMTimingRecovery(varargin)
             setProperties(obj,nargin,varargin{:});
         end
     end

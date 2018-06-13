@@ -1,3 +1,0 @@
-..Yuan Qiming
-ghghghgh
-zlk

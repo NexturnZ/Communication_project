@@ -1,4 +1,4 @@
-classdef QPSKCoarseFrequencyCompensator < matlab.System
+classdef FourQAMCoarseFrequencyCompensator < matlab.System
 %#codegen
 %    This object is used only in supporting packages.
 % 
@@ -17,7 +17,7 @@ classdef QPSKCoarseFrequencyCompensator < matlab.System
     end
     
     methods
-        function obj = QPSKCoarseFrequencyCompensator(varargin)
+        function obj = FourQAMCoarseFrequencyCompensator(varargin)
             setProperties(obj,nargin,varargin{:});
         end
     end
@@ -29,7 +29,7 @@ classdef QPSKCoarseFrequencyCompensator < matlab.System
                 'PhaseOffset', 0, ...
                 'FrequencyOffsetSource', 'Input port' , ...
                 'SampleRate', currentSampleRate);
-            obj.pCoarseFreqEst = comm.PSKCoarseFrequencyEstimator( ...
+            obj.pCoarseFreqEst = comm.QAMCoarseFrequencyEstimator( ...
                 'ModulationOrder', obj.ModulationOrder, ...
                 'FrequencyResolution', obj.CoarseCompFrequencyResolution, ...
                 'SampleRate', currentSampleRate);

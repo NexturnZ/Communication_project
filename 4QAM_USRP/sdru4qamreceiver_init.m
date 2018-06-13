@@ -1,4 +1,4 @@
-function SimParams = sdruqpskreceiver_init(platform)
+function SimParams = sdru4qamreceiver_init(platform)
 % Set simulation parameters
 % SimParams = sdruqpsktransmitter_init
 

@@ -1,37 +1,31 @@
 %% QPSK Receiver with USRP(R) Hardware
 %% Discover Radio
-% Discover radio(s) connected to your computer. This example uses the first
-% USRP(R) radio found using the |findsdru| function. Check if the radio is
-% available and record the radio type. If no available radios are found,
-% the example uses a default configuration for the system.
-
 connectedRadios = findsdru;
-if strncmp(connectedRadios(1).Status, 'Success', 7) && strncmp(connectedRadios(2).Status,'Success',7)
+if strncmp(connectedRadios(1).Status, 'Success', 7)
   platform = connectedRadios(1).Platform;
   switch connectedRadios(1).Platform
     case {'B200','B210'}
-      address1 = connectedRadios(1).SerialNum;
+      address = connectedRadios(1).SerialNum;
     case {'N200/N210/USRP2','X300','X310'}
-      address1 = connectedRadios(1).IPAddress;
-      address2 = connectedRadios(2).IPAddress;
+      address = connectedRadios(1).IPAddress;
   end
 else
-  address1 = '192.168.10.2';
-  address2 = '192.168.10.4';
+  address = '192.168.10.2';
   platform = 'N200/N210/USRP2';
 end
 
 %% Initialization
-% The <matlab:edit('sdruqpskreceiver_init.m') sdruqpskreceiver_init.m>
-% script initializes the simulation parameters and generates the structure
-% _prmQPSKReceiver_.
+
 
 % Receiver parameter structure
-prmQPSKReceiver = sdruqpskreceiver_init(platform);
+prmQPSKReceiver = sdru4qamreceiver_init(platform)
 prmQPSKReceiver.Platform = platform;
 prmQPSKReceiver.Address = address;
 compileIt  = false; % true if code is to be compiled for accelerated execution
 useCodegen = false; % true to run the latest generated code (mex file) instead of MATLAB code
+
+
+
 
 
 %% Execution and Results
@@ -47,7 +41,7 @@ if useCodegen
    clear runSDRuQPSKReceiver_mex %#ok<UNRCH>
    BER = runSDRuQPSKReceiver_mex(prmQPSKReceiver);
 else
-   BER = runSDRuQPSKReceiver(prmQPSKReceiver); 
+   BER = runSDRu4QAMReceiver(prmQPSKReceiver); 
 end
 
 fprintf('Error rate is = %f.\n',BER(1));
@@ -56,4 +50,21 @@ fprintf('Total number of compared samples = %d.\n',BER(3));
 
 
 
+%% Appendix
+% This example uses the following script and helper functions:
+%
+% * <matlab:edit('runSDRuQPSKReceiver.m') runSDRuQPSKReceiver.m>
+% * <matlab:edit('sdruqpskreceiver_init.m') sdruqpskreceiver_init.m>
+% * <matlab:edit('sdruQPSKRx.m') sdruQPSKRx.m>
+% * <matlab:edit('sdruQPSKDataDecoder.m') sdruQPSKDataDecoder.m>
+% * <matlab:edit('QPSKCoarseFrequencyCompensator.m') QPSKCoarseFrequencyCompensator.m>
+% * <matlab:edit('QPSKFineFrequencyCompensator.m') QPSKFineFrequencyCompensator.m>
+% * <matlab:edit('QPSKTimingRecovery.m') QPSKTimingRecovery.m>
 
+%% References
+% 1. Rice, Michael. _Digital Communications - A Discrete-Time
+% Approach_. 1st ed. New York, NY: Prentice Hall, 2008.
+
+%% Copyright Notice
+% Universal Software Radio Peripheral(R) and USRP(R) are trademarks of
+% National Instruments Corp.

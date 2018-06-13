@@ -1,4 +1,4 @@
-function runSDRuQPSKTransmitter(prmQPSKTransmitter)
+function runSDRu4QAMTransmitter(prmQPSKTransmitter)
 %#codegen
 
 %   Copyright 2012-2014 The MathWorks, Inc.
@@ -7,7 +7,7 @@ persistent hTx radio
 if isempty(hTx)
   % Initialize the components
   % Create and configure the transmitter System object
-  hTx = QPSKTransmitter(...
+  hTx = FourQAMTransmitter(...
     'UpsamplingFactor', prmQPSKTransmitter.Upsampling, ...
     'MessageLength', prmQPSKTransmitter.MessageLength, ...
     'TransmitterFilterCoefficients',prmQPSKTransmitter.TransmitterFilterCoefficients, ...
@@ -16,9 +16,6 @@ if isempty(hTx)
     'ScramblerPolynomial', prmQPSKTransmitter.ScramblerPolynomial, ...
     'ScramblerInitialConditions', prmQPSKTransmitter.ScramblerInitialConditions);
   
-
-  ostbcEnc = comm.OSTBCEncoder('NumTransmitAntennas',prmQPSKTransmitter.Numtransmitantenna);
-
   % Create and configure the SDRu System object. Set the SerialNum for B2xx
   % radios and IPAddress for X3xx, N2xx, and USRP2 radios. MasterClockRate
   % is not configurable for N2xx and USRP2 radios.
@@ -45,24 +42,17 @@ if isempty(hTx)
         'IPAddress',            prmQPSKTransmitter.Address, ...
         'CenterFrequency',      prmQPSKTransmitter.USRPCenterFrequency, ...
         'Gain',                 prmQPSKTransmitter.USRPGain, ...
-        'InterpolationFactor',  prmQPSKTransmitter.USRPInterpolationFactor,...
-        'ChannelMapping', [1 2] );
+        'InterpolationFactor',  prmQPSKTransmitter.USRPInterpolationFactor);
   end
-  radio.Gain=[prmQPSKTransmitter.USRPGain, prmQPSKTransmitter.USRPGain];
-  pLen = 8;               % number of pilot symbols per frame
-  W = hadamard(pLen);
-  pilots = W(:, 1:prmQPSKTransmitter.Numreceiveantenna);     % orthogonal set per transmit antenna
-  info(radio)
+  
   currentTime = 0;
   
   %Transmission Process
   while currentTime < prmQPSKTransmitter.StopTime
     % Bit generation, modulation and transmission filtering
     data = step(hTx);
-    data_mimo=ostbcEnc(data);
-    txSig=[pilots;data_mimo];
     % Data transmission
-    step(radio, [txSig, txSig]);
+    step(radio, data);
     % Update simulation time
     currentTime=currentTime+prmQPSKTransmitter.FrameTime;
   end

@@ -1,4 +1,4 @@
-classdef sdruQPSKRx < matlab.System
+classdef sdru4QAMRx < matlab.System
 %#codegen
     
 %   Copyright 2012-2014 The MathWorks, Inc.    
@@ -36,21 +36,23 @@ classdef sdruQPSKRx < matlab.System
         pFineFreqCompensator
         pTimingRec
         pDataDecod
-        
-        
-        
-        
-        pOldOutput % Stores the previous output of fine frequency compensation which is used by the same System object for phase error detection
+        pCoarseFreqEstimator
+        pPrbDet
+        pFrameSync
+        pBER
+        pOldOutput 
+        % Stores the previous output of fine frequency compensation which is used by the same System object for phase error detection
     end
     
     properties (Access = private, Constant)    %%!!!!
         pUpdatePeriod = 4 % Defines the size of vector that will be processed in AGC system object
-        pBarkerCode = [+1; +1; +1; +1; +1; -1; -1; +1; +1; -1; +1; -1; +1]; % Bipolar Barker Code        
-        pModulatedHeader = sqrt(2)/2 * (-1-1i) * qpskReceiver.pBarkerCode;  % !!!
+        pBarkerCode = [1; 1; 1; 1; 1; 0; 0; 1; 1;0; 1;0;1]'; 
+        pBarkerCodes= repmat(sdruQPSKRx.pBarkerCode,2,1);
+        pModulatedHeader=qammod(sdruQPSKRx.pBarkerCodes(:),4,'InputType','bit');     
     end
     
     methods
-        function obj = sdruQPSKRx(varargin)
+        function obj = sdru4QAMRx(varargin)
             setProperties(obj,nargin,varargin{:});
         end
     end
@@ -60,9 +62,9 @@ classdef sdruQPSKRx < matlab.System
             obj.pAGC = comm.AGC;
             obj.pRxFilter = dsp.FIRDecimator(...
                 obj.DownsamplingFactor,obj.ReceiverFilterCoefficients);
+       
             
-           
-            obj.pCoarseFreqCompensator = QPSKCoarseFrequencyCompensator(...
+            obj.pCoarseFreqCompensator = FourQAMCoarseFrequencyCompensator(...
                 'ModulationOrder', obj.ModulationOrder, ...
                 'CoarseCompFrequencyResolution', obj.CoarseCompFrequencyResolution, ...
                 'SampleRate', obj.SampleRate, ...
@@ -79,9 +81,10 @@ classdef sdruQPSKRx < matlab.System
             K2 = (4*theta*theta/d)/...
                 (obj.PhaseErrorDetectorGain*obj.PhaseRecoveryGain);
             obj.pOldOutput = complex(0); % used to store past value
-
             
-            obj.pFineFreqCompensator = QPSKFineFrequencyCompensator( ...
+          
+            
+            obj.pFineFreqCompensator = FourQAMFineFrequencyCompensator( ...
                 'ProportionalGain', K1, ...
                 'IntegratorGain', K2, ...
                 'DigitalSynthesizerGain', -1*obj.PhaseRecoveryGain);
@@ -96,14 +99,15 @@ classdef sdruQPSKRx < matlab.System
                 (obj.TimingErrorDetectorGain*obj.TimingRecoveryGain);
             K2 = (4*theta*theta/d)/...
                 (obj.TimingErrorDetectorGain*obj.TimingRecoveryGain);
-
             
-            obj.pTimingRec = QPSKTimingRecovery('ProportionalGain', K1,...
+            
+            
+            obj.pTimingRec = FourQAMTimingRecovery('ProportionalGain', K1,...
                 'IntegratorGain', K2, ...
                 'PostFilterOversampling', obj.PostFilterOversampling, ...
                 'BufferSize', obj.FrameSize);
             
-            obj.pDataDecod = sdruQPSKDataDecoder('FrameSize', obj.FrameSize, ...
+            obj.pDataDecod = sdru4QAMDataDecoder('FrameSize', obj.FrameSize, ...
                 'BarkerLength', obj.BarkerLength, ...
                 'ModulationOrder', obj.ModulationOrder, ...
                 'DataLength', obj.DataLength, ...
@@ -112,6 +116,7 @@ classdef sdruQPSKRx < matlab.System
                 'DescramblerPolynomial', obj.DescramblerPolynomial, ...
                 'DescramblerInitialConditions', obj.DescramblerInitialConditions, ...
                 'PrintOption', obj.PrintOption);
+       
         end
         
         
@@ -125,23 +130,25 @@ classdef sdruQPSKRx < matlab.System
             RCRxSignal = step(obj.pRxFilter,AGCSignal);
             
             % Coarsely compensate for the frequency offset
-            coarseCompSignal = obj.pCoarseFreqCompensator(RCRxSignal);                                         % Coarse frequency compensation   
+            coarseCompSignal = step(obj.pCoarseFreqCompensator, RCRxSignal);
             
             % Buffers to store values required for plotting
             coarseCompBuffer = ...
                 coder.nullcopy(complex(zeros(size(coarseCompSignal))));
             timingRecBuffer = coder.nullcopy(zeros(size(coarseCompSignal)));
-            % Scalar processing for fine frequency compensation and timing
-            % recovery 
-            BER = zeros(3,1);  
-          
+%           Scalar processing for fine frequency compensation and timing
+%           recovery 
+            BER = zeros(3,1);   %!!!!
+     
+            
             
             for i=1:length(coarseCompSignal)
                 
                 % Fine frequency compensation
-                fineCompSignal = obj.pFineFreqCompensator( [obj.pOldOutput; coarseCompSignal(i)]);   
+                fineCompSignal = obj.pFineFreqCompensator( [obj.pOldOutput; coarseCompSignal(i)]);   % !!!!!!
                 coarseCompBuffer(i) = fineCompSignal;
-                obj.pOldOutput = fineCompSignal;                
+                obj.pOldOutput = fineCompSignal;
+                
                 % Timing recovery of the received data
                 [dataOut, isDataValid, timingRecBuffer(i)] = ...
                     step(obj.pTimingRec, fineCompSignal);
